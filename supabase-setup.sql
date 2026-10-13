@@ -1,0 +1,20 @@
+-- UNO Online Realtime setup
+-- This starter uses Supabase Realtime Broadcast channels, not database tables.
+-- In your Supabase project: Database/Settings > Replication is not needed.
+-- Open Project Settings > API to find the Project URL and public anon/publishable key.
+-- Paste those into UNO Online > Settings.
+--
+-- IMPORTANT:
+-- This is a casual-play starter. Room broadcasts are not authenticated game state,
+-- chat is not private, and clients can inspect broadcast payloads. Do not use it for
+-- sensitive information or competitive/cheat-proof games.
+--
+-- Enable Realtime for your project and make sure Broadcast is available on channels.
+-- The app uses channels named uno-room-<ROOMCODE> and events:
+--   state   shared game state (host publishes)
+--   request client requests to host (join/play/draw/start)
+--   chat    room chat messages
+--
+-- No SQL tables are required for this prototype. The host browser must remain open
+-- while the room is in use. For production, use authenticated private channels plus
+-- server-validated game actions (e.g. Supabase Edge Functions) and database policies.
