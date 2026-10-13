@@ -11,16 +11,14 @@ A responsive browser-based Classic UNO-style game using HTML, CSS, JavaScript, a
 
 ## Run locally
 
-Open `index.html` in a browser. For the best experience, use a local static server (for example, VS Code Live Server). Without Supabase credentials the app opens a local demo room; online rooms require Supabase.
+Open `index.html` in a browser. For the best experience, use a local static server (for example, VS Code Live Server). The UNO Online Supabase project URL and publishable key are preconfigured, so online rooms should connect without manual setup. The gear icon can override those settings. If Realtime is unavailable, check the browser console and project Realtime settings.
 
 ## Set up online play
 
-1. Create a free project at [Supabase](https://supabase.com/dashboard).
-2. Open UNO Online and click the gear icon.
-3. Paste your Supabase **Project URL** and public **anon/publishable key**. Never use a service-role or secret key in a browser.
-4. Save settings.
-5. Create a room. Share the six-character room code with friends who also have the deployed site and the same Supabase project settings.
-6. Keep the host's browser open while playing.
+1. Open UNO Online; its Supabase project URL and public publishable key are already configured.
+2. Create a room and share the six-character room code with friends using the same site.
+3. Keep the host's browser open while playing.
+4. If you want to use a different Supabase project, open the gear icon and enter that project's URL and public publishable/anon key. Never use a service-role or secret key in the browser.
 
 The prototype uses Realtime Broadcast channels and does not need database tables. Supabase project/channel policies may need to allow the broadcast use configured for your project.
 
