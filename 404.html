@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Play a colorful game of UNO Online with friends.">
+  <base href="/UNO-Online/">
+  <title>UNO Online — Play with friends</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="UNO Online home"><span class="brand-mark">U</span><span>UNO<span class="brand-light"> ONLINE</span></span></a>
+    <div class="top-actions"><span class="connection"><i id="connection-dot"></i><span id="connection-label">Ready to play</span></span><button class="icon-button" id="settings-open" aria-label="Settings">⚙</button></div>
+  </header>
+  <main>
+    <section id="lobby-screen" class="screen">
+      <div class="hero">
+        <div class="eyebrow"><span class="sparkle">✦</span> YOUR NEXT GAME NIGHT STARTS HERE</div>
+        <h1>One more round.<br><span class="gradient-text">One more chance.</span></h1>
+        <p class="hero-copy">Invite your people, play your cards, and let the friendly chaos begin.</p>
+        <div class="hero-pills"><span>♧ Classic rules</span><span>♙ Up to 6 players</span><span>♡ Free to play</span></div>
+      </div>
+      <div class="lobby-grid">
+        <article class="panel create-panel"><div class="panel-icon icon-red">＋</div><h2>Create a room</h2><p>Host a new game and invite friends with a room code.</p><label for="create-name">Your nickname</label><input id="create-name" maxlength="18" placeholder="e.g. Card Champ" autocomplete="nickname"><button id="create-room" class="primary-button">Create room <span>→</span></button></article>
+        <article class="panel join-panel"><div class="panel-icon icon-blue">↗</div><h2>Join a room</h2><p>Got an invite code? Enter it below and jump in.</p><label for="join-name">Your nickname</label><input id="join-name" maxlength="18" placeholder="e.g. Wild Card"><label for="room-code">Room code</label><input id="room-code" class="code-input" maxlength="6" placeholder="ABC123" autocomplete="off"><button id="join-room" class="secondary-button">Join game <span>→</span></button></article>
+      </div>
+      <div class="notice" id="setup-notice"><span>ⓘ</span><div><strong>Online play setup</strong><p>UNO Online is connected to its Supabase project by default. Create a room and share the code with friends. Settings lets you change the project if needed.</p></div><button id="notice-settings">Set up ↗</button></div>
+      <div class="feature-row"><div><span class="feature-symbol">♧</span><span><strong>Classic UNO</strong><small>Numbers, skips, reverses & wilds</small></span></div><div><span class="feature-symbol">♙</span><span><strong>Private rooms</strong><small>Invite friends with a code</small></span></div><div><span class="feature-symbol">✧</span><span><strong>Make it yours</strong><small>Choose a card-back theme</small></span></div></div>
+    </section>
+    <section id="game-screen" class="screen hidden">
+      <div class="game-heading"><div><button id="back-lobby" class="back-button">← Lobby</button><h1 id="room-title">Your game</h1><p id="room-subtitle">Waiting for players…</p></div><div class="room-code-box"><small>ROOM CODE</small><strong id="display-room-code">------</strong><button id="copy-code">Copy invite</button></div></div>
+      <div class="game-layout">
+        <section class="table-panel">
+          <div class="opponents" id="opponents"></div>
+          <div class="table-center"><div class="draw-pile-wrap"><small>DRAW PILE</small><button id="draw-pile" class="card card-back" aria-label="Draw a card"><span>UNO</span></button><small id="deck-count">Deck</small></div><div class="discard-wrap"><small>PLAYING</small><div id="discard-pile"></div><small id="turn-label">Waiting for host</small></div><div class="direction-pill" id="direction-pill">↻ CLOCKWISE</div></div>
+          <div class="table-footer"><span id="status-message">Create or join a room to begin.</span><button id="start-game" class="primary-button small-button hidden">Start game</button><button id="uno-button" class="uno-button hidden">UNO!</button></div>
+        </section>
+        <aside class="side-panel"><div class="side-tabs"><button class="tab active" data-tab="chat">Chat <span id="chat-count">0</span></button><button class="tab" data-tab="scores">Scores</button><button class="tab" data-tab="skins">Skins</button></div><div id="chat-tab" class="tab-content"><div id="chat-messages" class="chat-messages"><div class="empty-chat">👋<br>Say hello to your table!</div></div><form id="chat-form" class="chat-form"><input id="chat-input" maxlength="180" placeholder="Send a message…" autocomplete="off"><button aria-label="Send message">➤</button></form><div class="chat-note">Be kind. This chat is for your room.</div></div><div id="scores-tab" class="tab-content hidden"><div id="score-list" class="score-list"></div></div><div id="skins-tab" class="tab-content hidden"><p class="skin-intro">Pick a card-back style. This only changes your view.</p><div class="skin-options"><button class="skin-option selected" data-skin="classic"><span class="mini-back classic-back">UNO</span><strong>Classic</strong></button><button class="skin-option" data-skin="midnight"><span class="mini-back midnight-back">UNO</span><strong>Midnight</strong></button><button class="skin-option" data-skin="candy"><span class="mini-back candy-back">UNO</span><strong>Candy</strong></button><button class="skin-option" data-skin="lime"><span class="mini-back lime-back">UNO</span><strong>Lime</strong></button></div></div></aside>
+      </div>
+      <section class="hand-panel"><div class="hand-heading"><div><h2>Your hand <span id="hand-count">0</span></h2><p id="hand-hint">It's your turn? Play a matching card.</p></div><button id="sort-hand" class="ghost-button">↕ Sort cards</button></div><div id="player-hand" class="player-hand"></div></section>
+    </section>
+  </main>
+  <footer><span>UNO ONLINE</span><span>Made for game night · Not affiliated with Mattel</span><button id="footer-help">How to play</button></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="settings-dialog" class="settings-dialog"><form method="dialog" class="dialog-top"><div><span class="eyebrow">CONNECTION SETTINGS</span><h2>Make it multiplayer</h2></div><button class="icon-button" aria-label="Close">✕</button></form><p class="dialog-copy">The UNO Online Supabase project is preconfigured. You normally do not need to enter credentials. If you use a different project, enter its URL and public publishable/anon key here. Never use a service-role or secret key.</p><label for="supabase-url">Supabase project URL</label><input id="supabase-url" type="url" placeholder="https://your-project.supabase.co"><label for="supabase-key">Publishable / anon key</label><input id="supabase-key" placeholder="sb_publishable_… or eyJ…" autocomplete="off"><div class="dialog-actions"><button type="button" id="test-connection" class="secondary-button">Test connection</button><button type="button" id="save-settings" class="primary-button">Save settings</button></div><p id="settings-status" class="settings-status">Credentials are saved in this browser only.</p><a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer">Open Supabase dashboard ↗</a><p class="tiny-warning">Use only a public client key. Room broadcasts and chat are intended for casual play, not secure or private communication.</p></dialog>
+  <dialog id="wild-dialog" class="wild-dialog"><h2>Choose a color</h2><p>What color should the next player match?</p><div class="wild-colors"><button data-color="red" class="wild-color red">Red</button><button data-color="blue" class="wild-color blue">Blue</button><button data-color="green" class="wild-color green">Green</button><button data-color="yellow" class="wild-color yellow">Yellow</button></div></dialog>
+  <dialog id="help-dialog" class="settings-dialog"><form method="dialog" class="dialog-top"><div><span class="eyebrow">QUICK GUIDE</span><h2>How to play</h2></div><button class="icon-button" aria-label="Close">✕</button></form><p>Play a card that matches the discard pile's color or number, or play a Wild. If you cannot play, draw a card. First player to empty their hand wins.</p><ul><li><b>Skip:</b> the next player misses a turn.</li><li><b>Reverse:</b> reverses the direction of play.</li><li><b>Draw Two:</b> the next player draws two and misses their turn.</li><li><b>Wild:</b> choose the color to continue.</li><li><b>Wild Draw Four:</b> choose a color; next player draws four and misses their turn. Official rules restrict this to when you have no card matching the current color.</li><li><b>UNO:</b> when you have one card, press UNO! to call it out. This starter version does not automatically penalize missed calls.</li></ul><button class="primary-button" id="close-help">Got it!</button></dialog>
+</body>
+</html>
