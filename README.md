@@ -22,6 +22,10 @@ Open `index.html` in a browser. For the best experience, use a local static serv
 
 The prototype uses Realtime Broadcast channels and does not need database tables. Supabase project/channel policies may need to allow the broadcast use configured for your project.
 
+## Shareable game URLs
+
+Room links follow `/UNO-Online/<GAMEPIN>/<NICKNAME>`, for example `https://b3434474-art.github.io/UNO-Online/ABC234/Ben`. Opening a link that includes both the six-character PIN and a nickname attempts to join that room automatically. The **Copy invite** button copies the room URL without a nickname so each friend can choose their own nickname. GitHub Pages uses `404.html` to serve the app on these room-specific paths.
+
 ## Publish free with GitHub Pages
 
 1. Open this repository on GitHub.
