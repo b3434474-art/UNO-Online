@@ -37,3 +37,9 @@
 .skin-preview>div strong{font-size:11px!important;line-height:1.25!important;overflow-wrap:anywhere!important}
 .skin-preview>div small{display:block!important;font-size:9px!important;line-height:1.3!important;white-space:normal!important}
 @media(max-width:560px){.skin-preview{padding:10px 8px!important}.skin-preview>.preview-card{width:31px!important;min-width:31px!important;max-width:31px!important;height:47px!important;min-height:47px!important;max-height:47px!important;flex-basis:31px!important;margin-right:-12px!important}.skin-preview>.preview-card:nth-child(3){margin-right:10px!important}.skin-preview>div{margin-left:4px!important}}
+
+
+/* Equipped artwork is also used on the draw pile */
+#draw-pile.card-back{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0!important;background:#fff!important;border:3px solid #fff!important;border-radius:10px!important;isolation:isolate}
+#draw-pile.card-back>img{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;border-radius:6px!important;z-index:1!important}
+#draw-pile.card-back>span{display:none!important}
