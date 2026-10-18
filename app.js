@@ -138,7 +138,7 @@
     if(!currentUser||!supabaseClient)return;
     try{
       const {data,error}=await supabaseClient.functions.invoke("uno-moderation",{body:{action:"global_event_get"}});
-      if(error||data?.error)return;
+      if(error||data?.error){console.warn("Global event check failed",data?.error||error);return;}
       const ev=data?.event;if(!ev)return;
       const key=ev.updated_at+"|"+ev.event_name;
       if(key===handledGlobalEventKey||!isHost||!game||!game.started||game.finished)return;
@@ -161,7 +161,7 @@
       }
     }catch(e){console.warn("Global event poll failed",e);}
   }
-  setInterval(pollGlobalChaos,2000);
+  setInterval(pollGlobalChaos,1000);
   $("#load-reports").addEventListener("click",async()=>{try{const {reports=[]}=await edgeAction({action:"reports"});$("#moderation-output").innerHTML=reports.length?reports.map(r=>'<article><strong>'+escapeHtml(r.reported_username)+'</strong> · '+escapeHtml(r.status)+'<p>'+escapeHtml(r.reason)+'</p><small>'+escapeHtml(new Date(r.created_at).toLocaleString())+'</small><div><button data-report-status="reviewed" data-report-id="'+r.id+'">Reviewed</button><button data-report-status="dismissed" data-report-id="'+r.id+'">Dismiss</button><button data-report-status="actioned" data-report-id="'+r.id+'">Actioned</button></div></article>').join(""):"No reports yet.";$("#moderation-output").querySelectorAll("[data-report-status]").forEach(b=>b.addEventListener("click",async()=>{try{await edgeAction({action:"report_status",report_id:b.dataset.reportId,status:b.dataset.reportStatus});$("#load-reports").click();}catch(e){toast(e.message);}}));}catch(e){$("#moderation-output").textContent=e.message;}});
   $("#load-audit").addEventListener("click",async()=>{try{const {audit=[]}=await edgeAction({action:"audit"});$("#moderation-output").innerHTML=audit.length?audit.map(a=>'<article><strong>'+escapeHtml(a.action)+'</strong> · '+escapeHtml(a.target_username||"report/system")+'<p>'+escapeHtml(a.reason||"No reason supplied")+'</p><small>'+escapeHtml(new Date(a.created_at).toLocaleString())+'</small></article>').join(""):"No moderation actions recorded."; }catch(e){$("#moderation-output").textContent=e.message;}});
   const baseRenderGame=renderGame;
