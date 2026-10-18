@@ -43,3 +43,13 @@
 #draw-pile.card-back{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0!important;background:#fff!important;border:3px solid #fff!important;border-radius:10px!important;isolation:isolate}
 #draw-pile.card-back>img{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;border-radius:6px!important;z-index:1!important}
 #draw-pile.card-back>span{display:none!important}
+
+/* Account and moderation controls */
+#account-open,#moderation-open{width:auto;margin:0;padding:8px 10px;font-size:11px;white-space:nowrap}
+#auth-reset{margin-top:8px;width:auto}
+.moderation-output{max-height:240px;overflow:auto;margin-top:14px;font-size:11px;line-height:1.5;color:#dce5f7;overflow-wrap:anywhere}
+.moderation-output article{padding:10px 0;border-bottom:1px solid var(--line)}
+.moderation-output button{width:auto;padding:6px 9px;margin:6px 6px 0 0;font-size:10px}
+.opponent .report-player{width:auto;margin:5px 0 0;padding:4px 7px;font-size:9px;border:1px solid #ffffff30;background:#16283b;color:#fff;border-radius:6px}
+.opponent{flex-wrap:wrap}
+@media(max-width:560px){#account-open,#moderation-open{padding:7px 8px;font-size:10px}}
