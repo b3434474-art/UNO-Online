@@ -53,3 +53,13 @@
 .opponent .report-player{width:auto;margin:5px 0 0;padding:4px 7px;font-size:9px;border:1px solid #ffffff30;background:#16283b;color:#fff;border-radius:6px}
 .opponent{flex-wrap:wrap}
 @media(max-width:560px){#account-open,#moderation-open{padding:7px 8px;font-size:10px}}
+
+
+/* Global admin abuse event controls */
+.chaos-heading{font:700 16px 'Space Grotesk',sans-serif;margin:20px 0 5px;color:#ffb35d}
+.chaos-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.chaos-button{border:1px solid #57466b;border-radius:12px;background:linear-gradient(135deg,#292344,#18243a);color:#fff;padding:12px 9px;font-size:11px;font-weight:800;text-align:left}
+.chaos-button small{display:block;margin-top:5px;color:#b9c4dc;font-size:9px;font-weight:500;line-height:1.4}
+.chaos-button:hover{filter:brightness(1.25);transform:translateY(-1px)}
+.account-name-locked{opacity:.8}
+@media(max-width:390px){.chaos-grid{grid-template-columns:1fr}}
