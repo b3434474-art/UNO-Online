@@ -18,3 +18,7 @@
 -- No SQL tables are required for this prototype. The host browser must remain open
 -- while the room is in use. For production, use authenticated private channels plus
 -- server-validated game actions (e.g. Supabase Edge Functions) and database policies.
+
+-- Account/moderation schema is managed by Supabase migration uno_accounts_moderation.
+-- Deploy Edge Function uno-moderation and set UNO_OWNER_EMAIL to the owner's verified
+-- email in Supabase Edge Function secrets. Never put a service-role key in GitHub Pages.
