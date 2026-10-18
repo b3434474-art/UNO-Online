@@ -72,7 +72,7 @@
   $("#chat-form").addEventListener("submit",async e=>{e.preventDefault();const text=$("#chat-input").value.trim();if(!text)return;if(!roomCode){toast("Join a room to chat.");return;}if(!currentUser){setAuthMode("signin");$("#auth-dialog").showModal();toast("Sign in to use chat.");return;}try{const {data:mod}=await supabaseClient.from("uno_moderation_status").select("muted_until,banned,banned_until").eq("user_id",currentUser.id).maybeSingle();if(mod?.banned&&(!mod.banned_until||new Date(mod.banned_until)>new Date())){toast("Your account is banned.");return;}if(mod?.muted_until&&new Date(mod.muted_until)>new Date()){toast("You are muted until "+new Date(mod.muted_until).toLocaleString()+".");return;}}catch{toast("Could not verify account status. Try again.");return;}const message={name:myName,text:text.slice(0,180),time:Date.now()};chatMessages.push(message);chatMessages=chatMessages.slice(-60);renderChat();$("#chat-input").value="";if(online)await broadcast("chat",{roomCode,message});});function renderChat(){$("#chat-count").textContent=chatMessages.length;$("#chat-messages").innerHTML=chatMessages.length?chatMessages.map(m=>'<div class="chat-line"><strong>'+escapeHtml(m.name)+'</strong><time>'+new Date(m.time).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+'</time><p>'+escapeHtml(m.text)+'</p></div>').join(""):'<div class="empty-chat">👋<br>Say hello to your table!</div>';$("#chat-messages").scrollTop=$("#chat-messages").scrollHeight;}
   function applyCardBack(skin){const validSkins=["nature","grass","water","sprinkles","autumn","stick-figure","snowman","night-sky","pizza","popsicles","stripes"];if(!validSkins.includes(skin))skin="nature";localStorage.setItem(STORE.skin,skin);document.body.dataset.skin=skin;const asset="assets/cardbacks/"+skin+".svg";document.querySelectorAll("#draw-pile").forEach(el=>{el.className="card card-back skin-"+skin+"-back";let img=el.querySelector("img");if(!img){img=document.createElement("img");el.replaceChildren(img);}img.src=asset;img.alt="";img.setAttribute("aria-hidden","true");});document.querySelectorAll(".skin-option").forEach(b=>b.classList.toggle("selected",b.dataset.skin===skin));document.querySelectorAll(".skin-preview .preview-card img").forEach(el=>{el.src=asset;el.alt=skin+" card back preview";});const selected=document.querySelector(".skin-option[data-skin=\""+skin+"\"] strong");$("#skin-preview-name").textContent=selected?selected.textContent:"Nature";}document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b===btn));["chat","scores","skins"].forEach(t=>$("#"+t+"-tab").classList.toggle("hidden",btn.dataset.tab!==t));}));document.querySelectorAll(".skin-option").forEach(btn=>btn.addEventListener("click",()=>{const skin=btn.dataset.skin;applyCardBack(skin);toast(btn.querySelector("strong").textContent+" card back equipped.");}));
 
-  // Supabase Auth + owner-only moderation. The owner email is configured as an Edge Function secret.
+  // Supabase Auth + owner-only moderation. Owner identity is verified server-side by Auth user UUID.
   let authMode="signin", currentUser=null;
   async function edgeAction(payload){
     const {data:{session}}=await supabaseClient.auth.getSession();
@@ -126,6 +126,42 @@
   joinRoom=async function(){if(!(await requireAccount()))return;if(currentUser){myName=currentUser.user_metadata?.username||myName;$("#join-name").value=myName;}return originalJoinRoom();};
   $("#moderation-open").addEventListener("click",async()=>{if(!currentUser)return;$("#moderation-dialog").showModal();$("#moderation-output").textContent="Loading player accounts…";try{const {data,error}=await supabaseClient.from("uno_profiles").select("user_id,username").order("username").limit(500);if(error)throw error;$("#moderation-player").innerHTML=(data||[]).filter(p=>p.user_id!==currentUser.id).map(p=>'<option value="'+escapeHtml(p.user_id)+'">'+escapeHtml(p.username)+' ('+escapeHtml(p.user_id.slice(0,8))+')</option>').join("")||'<option value="">No other accounts</option>';$("#moderation-output").textContent="Owner tools ready."; }catch(e){$("#moderation-output").textContent=e.message;}});
   document.querySelectorAll("[data-mod-action]").forEach(btn=>btn.addEventListener("click",async()=>{const target=$("#moderation-player").value;if(!target){$("#moderation-output").textContent="Select a player first.";return;}try{const result=await edgeAction({action:btn.dataset.modAction,target_user_id:target,reason:$("#moderation-reason").value.trim()});$("#moderation-output").textContent=result.action+" applied to "+result.target_username+".";toast("Moderation action recorded.");}catch(e){$("#moderation-output").textContent=e.message;}}));
+  let lastGlobalEventKey = "";
+  let handledGlobalEventKey = "";
+  const chaosNames = {draw100:"💀 DRAW 100 CHAOS",reverse_apocalypse:"🔄 REVERSE APOCALYPSE",color_war:"🌈 COLOR WAR",hand_shuffle:"🎲 HAND SHUFFLE"};
+  document.querySelectorAll("[data-global-event]").forEach(btn=>btn.addEventListener("click",async()=>{
+    try{const result=await edgeAction({action:"global_event_set",event_name:btn.dataset.globalEvent});toast((chaosNames[result.event_name]||"Chaos event")+" activated across active rounds!");}
+    catch(e){toast(e.message||"Could not start global event.");}
+  }));
+  $("#end-global-event").addEventListener("click",async()=>{try{await edgeAction({action:"global_event_set",event_name:""});toast("Global event ended.");}catch(e){toast(e.message||"Could not end event.");}});
+  async function pollGlobalChaos(){
+    if(!currentUser||!supabaseClient)return;
+    try{
+      const {data,error}=await supabaseClient.functions.invoke("uno-moderation",{body:{action:"global_event_get"}});
+      if(error||data?.error)return;
+      const ev=data?.event;if(!ev)return;
+      const key=ev.updated_at+"|"+ev.event_name;
+      if(key===handledGlobalEventKey||!isHost||!game||!game.started||game.finished)return;
+      handledGlobalEventKey=key;
+      if(ev.event_name==="draw100"){
+        for(const p of game.players){for(let n=0;n<20;n++){const c=drawFromDeck(game);if(c)p.hand.push(c);}}
+        setMessage("💀 DRAW 100 CHAOS! Everyone draws up to 20 cards!");
+        publishState();
+      }else if(ev.event_name==="hand_shuffle"){
+        const cards=game.players.flatMap(p=>p.hand||[]);shuffle(cards);
+        let i=0;for(const p of game.players){const count=p.hand.length;p.hand=[];for(let n=0;n<count;n++)if(cards[i])p.hand.push(cards[i++]);}
+        setMessage("🎲 HAND SHUFFLE! Everyone's cards have been redistributed!");
+        publishState();
+      }else if(ev.event_name==="reverse_apocalypse"){
+        setMessage("🔄 REVERSE APOCALYPSE!");
+        let count=0;const timer=setInterval(()=>{if(!game||!isHost||game.finished||count>=8){clearInterval(timer);return;}game.direction*=-1;setMessage("🔄 REVERSE APOCALYPSE! Direction flipped!");publishState();count++;},1000);
+      }else if(ev.event_name==="color_war"){
+        setMessage("🌈 COLOR WAR! The active color is changing!");
+        let count=0;const timer=setInterval(()=>{if(!game||!isHost||game.finished||count>=6){clearInterval(timer);return;}game.currentColor=COLORS[Math.floor(Math.random()*COLORS.length)];setMessage("🌈 COLOR WAR! Active color: "+game.currentColor.toUpperCase());publishState();count++;},2000);
+      }
+    }catch(e){console.warn("Global event poll failed",e);}
+  }
+  setInterval(pollGlobalChaos,2000);
   $("#load-reports").addEventListener("click",async()=>{try{const {reports=[]}=await edgeAction({action:"reports"});$("#moderation-output").innerHTML=reports.length?reports.map(r=>'<article><strong>'+escapeHtml(r.reported_username)+'</strong> · '+escapeHtml(r.status)+'<p>'+escapeHtml(r.reason)+'</p><small>'+escapeHtml(new Date(r.created_at).toLocaleString())+'</small><div><button data-report-status="reviewed" data-report-id="'+r.id+'">Reviewed</button><button data-report-status="dismissed" data-report-id="'+r.id+'">Dismiss</button><button data-report-status="actioned" data-report-id="'+r.id+'">Actioned</button></div></article>').join(""):"No reports yet.";$("#moderation-output").querySelectorAll("[data-report-status]").forEach(b=>b.addEventListener("click",async()=>{try{await edgeAction({action:"report_status",report_id:b.dataset.reportId,status:b.dataset.reportStatus});$("#load-reports").click();}catch(e){toast(e.message);}}));}catch(e){$("#moderation-output").textContent=e.message;}});
   $("#load-audit").addEventListener("click",async()=>{try{const {audit=[]}=await edgeAction({action:"audit"});$("#moderation-output").innerHTML=audit.length?audit.map(a=>'<article><strong>'+escapeHtml(a.action)+'</strong> · '+escapeHtml(a.target_username||"report/system")+'<p>'+escapeHtml(a.reason||"No reason supplied")+'</p><small>'+escapeHtml(new Date(a.created_at).toLocaleString())+'</small></article>').join(""):"No moderation actions recorded."; }catch(e){$("#moderation-output").textContent=e.message;}});
   const baseRenderGame=renderGame;
