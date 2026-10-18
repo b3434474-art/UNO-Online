@@ -91,12 +91,12 @@
     $("#account-open").textContent=currentUser?(currentUser.user_metadata?.username||"Account"):"Sign in";
     // Signed-in players always use their account username; nickname inputs are only for guests.
     ["#create-name","#join-name"].forEach(selector=>{const input=$(selector);input.readOnly=!!currentUser;input.setAttribute("aria-readonly",String(!!currentUser));input.title=currentUser?"Your account username is used automatically.":"Choose a nickname.";input.classList.toggle("account-name-locked",!!currentUser);});
-    $("#auth-signout").classList.toggle("hidden",!currentUser);
+    $("#auth-signout").classList.toggle("hidden",!currentUser);\n    // Show the tools entry to signed-in accounts; the server still enforces owner-only actions.\n    $("#moderation-open").classList.toggle("hidden",!currentUser);
     $("#moderation-open").classList.add("hidden");
     if(currentUser){
       const {data:profile}=await supabaseClient.from("uno_profiles").select("username").eq("user_id",currentUser.id).maybeSingle();
       if(profile?.username){myName=profile.username;localStorage.setItem(STORE.name,myName);$("#create-name").value=myName;$("#join-name").value=myName;}
-      try{const status=await supabaseClient.from("uno_moderation_status").select("banned,banned_until,muted_until").eq("user_id",currentUser.id).maybeSingle();const s=status.data;if(s?.banned&&(!s.banned_until||new Date(s.banned_until)>new Date()))toast("Your account is banned from UNO Online.");else if(currentUser.email) { /* owner UI is only enabled after server verification */ const check=await edgeAction({action:"audit"});$("#moderation-open").classList.remove("hidden");}}
+      try{const status=await supabaseClient.from("uno_moderation_status").select("banned,banned_until,muted_until").eq("user_id",currentUser.id).maybeSingle();const s=status.data;if(s?.banned&&(!s.banned_until||new Date(s.banned_until)>new Date()))toast("Your account is banned from UNO Online.");}
       catch(e){/* A normal player receives 403; do not show owner tools. */}
     }
   }
