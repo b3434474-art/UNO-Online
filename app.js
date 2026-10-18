@@ -83,12 +83,12 @@
     return data;
   }
   function authStatus(message){$("#auth-status").textContent=message;}
-  function setAuthMode(mode){authMode=mode;$("#auth-title").textContent=mode==="signup"?"Create account":"Sign in";$("#auth-submit").textContent=mode==="signup"?"Create account":"Sign in";$("#auth-switch").textContent=mode==="signup"?"I already have an account":"Create account";$("#auth-username").classList.toggle("hidden",mode!=="signup");$("#auth-username").required=mode==="signup";$("#auth-reset").classList.toggle("hidden",mode==="signup");authStatus("");}
+  function setAuthMode(mode){authMode=mode;$("#auth-title").textContent=mode==="signup"?"Create account":"Sign in";$("#auth-submit").textContent=mode==="signup"?"Create account":"Sign in";$("#auth-switch").textContent=mode==="signup"?"I already have an account":"Create account";$("#auth-username").classList.remove("hidden");$("#auth-username").required=true;authStatus("");}
   async function refreshAuth(){
     if(!supabaseClient)initSupabase();
     if(!supabaseClient)return;
     const {data:{session}}=await supabaseClient.auth.getSession();currentUser=session?.user||null;if(currentUser){playerId=currentUser.id;sessionStorage.setItem("uno_player_id",playerId);}
-    $("#account-open").textContent=currentUser?(currentUser.email||"Account"):"Sign in";
+    $("#account-open").textContent=currentUser?(currentUser.user_metadata?.username||"Account"):"Sign in";
     $("#auth-signout").classList.toggle("hidden",!currentUser);
     $("#moderation-open").classList.add("hidden");
     if(currentUser){
@@ -101,20 +101,22 @@
   $("#account-open").addEventListener("click",()=>{setAuthMode("signin");$("#auth-dialog").showModal();});
   $("#auth-switch").addEventListener("click",()=>setAuthMode(authMode==="signin"?"signup":"signin"));
   $("#auth-submit").addEventListener("click",async()=>{
-    if(!initSupabase()){authStatus("Supabase could not initialize. Reload the page and try again.");return;}
-    const email=$("#auth-email").value.trim(),password=$("#auth-password").value,username=cleanName($("#auth-username").value);
-    if(!email||password.length<8){authStatus("Enter a valid email and a password with at least 8 characters.");return;}
+    if(!initSupabase()){authStatus("Supabase could not initialize. Reload and try again.");return;}
+    const username=$("#auth-username").value.trim().toLowerCase(),password=$("#auth-password").value;
+    if(!/^[a-z0-9_]{3,18}$/.test(username)){authStatus("Username must be 3–18 characters using letters, numbers, or underscores.");return;}
+    if(password.length<8||password.length>128){authStatus("Password must be between 8 and 128 characters.");return;}
     $("#auth-submit").disabled=true;authStatus("Please wait…");
     try{
-      if(authMode==="signup"){
-        const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{username}}});if(error)throw error;
-        if(!data.session){authStatus("Account created! Check your email to verify it, then sign in.");return;}
-        authStatus("Account created.");toast("Welcome to UNO Online!");
-      }else{const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)throw error;authStatus("Signed in!");toast("Welcome back!");}
-      await refreshAuth();setTimeout(()=>$("#auth-dialog").close(),400);
+      const {data,error}=await supabaseClient.functions.invoke("uno-username-auth",{body:{action:authMode==="signup"?"signup":"signin",username,password}});
+      if(error||data?.error)throw new Error(data?.error||error.message||"Authentication failed.");
+      if(!data?.session)throw new Error("No session returned. Please try again.");
+      const {error:sessionError}=await supabaseClient.auth.setSession(data.session);if(sessionError)throw sessionError;
+      currentUser=(await supabaseClient.auth.getUser()).data.user;playerId=currentUser.id;sessionStorage.setItem("uno_player_id",playerId);
+      myName=data.user?.username||username;localStorage.setItem(STORE.name,myName);$("#create-name").value=myName;$("#join-name").value=myName;
+      await refreshAuth();authStatus(authMode==="signup"?"Account created!":"Signed in!");toast(authMode==="signup"?"Account created!":"Welcome back!");
+      setTimeout(()=>$("#auth-dialog").close(),350);
     }catch(e){authStatus(e.message||"Authentication failed.");}finally{$("#auth-submit").disabled=false;}
   });
-  $("#auth-reset").addEventListener("click",async()=>{if(!initSupabase())return;const email=$("#auth-email").value.trim();if(!email){authStatus("Enter your email first.");return;}const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+APP_BASE});authStatus(error?error.message:"If that email has an account, a password-reset link will arrive shortly.");});
   $("#auth-signout").addEventListener("click",async()=>{if(supabaseClient)await supabaseClient.auth.signOut();currentUser=null;$("#auth-dialog").close();await refreshAuth();toast("Signed out.");});
   async function requireAccount(){if(!currentUser){setAuthMode("signin");$("#auth-dialog").showModal();toast("Sign in to play online.");return false;}const {data}=await supabaseClient.from("uno_moderation_status").select("banned,banned_until").eq("user_id",currentUser.id).maybeSingle();if(data?.banned&&(!data.banned_until||new Date(data.banned_until)>new Date())){toast("This account is banned from joining games.");return false;}return true;}
   const originalCreateRoom=createRoom, originalJoinRoom=joinRoom;
