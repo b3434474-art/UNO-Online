@@ -91,8 +91,9 @@
     $("#account-open").textContent=currentUser?(currentUser.user_metadata?.username||"Account"):"Sign in";
     // Signed-in players always use their account username; nickname inputs are only for guests.
     ["#create-name","#join-name"].forEach(selector=>{const input=$(selector);input.readOnly=!!currentUser;input.setAttribute("aria-readonly",String(!!currentUser));input.title=currentUser?"Your account username is used automatically.":"Choose a nickname.";input.classList.toggle("account-name-locked",!!currentUser);});
-    $("#auth-signout").classList.toggle("hidden",!currentUser);\n    // Show the tools entry to signed-in accounts; the server still enforces owner-only actions.\n    $("#moderation-open").classList.toggle("hidden",!currentUser);
-    $("#moderation-open").classList.add("hidden");
+    $("#auth-signout").classList.toggle("hidden",!currentUser);
+    // Show the tools entry to signed-in accounts; the server still enforces owner-only actions.
+    $("#moderation-open").classList.toggle("hidden",!currentUser);
     if(currentUser){
       const {data:profile}=await supabaseClient.from("uno_profiles").select("username").eq("user_id",currentUser.id).maybeSingle();
       if(profile?.username){myName=profile.username;localStorage.setItem(STORE.name,myName);$("#create-name").value=myName;$("#join-name").value=myName;}
